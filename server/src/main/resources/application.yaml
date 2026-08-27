@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: latebird-server
+
+  datasource:
+    # Port 5434 matches the host port mapped in docker-compose.yml.
+    url: ${DB_URL:jdbc:postgresql://localhost:5434/latebird}
+    username: ${DB_USER:latebird}
+    password: ${DB_PASSWORD:latebird}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+    # Closes the database session when the service method returns, rather than
+    # keeping it open until the HTTP response is written.
+    open-in-view: false
+
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: ${SERVER_PORT:8081}
+
+logging:
+  level:
+    # Log every SQL statement Hibernate runs. Verbose, and worth it while I learn.
+    org.hibernate.SQL: debug

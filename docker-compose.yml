@@ -1,0 +1,23 @@
+# Local development database.
+# Phase 1 only needs Postgres. I'll add the Spring Boot and Flask services later
+services:
+  db:
+    image: postgres:16
+    container_name: latebird-postgres
+    environment:
+      POSTGRES_DB: latebird
+      POSTGRES_USER: latebird
+      POSTGRES_PASSWORD: latebird
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      # A named volume, so data survives `docker compose down`
+      - latebird-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U latebird -d latebird"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  latebird-pgdata:

@@ -1,0 +1,17 @@
+# Java / Maven
+server/target/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Environment / secrets — never commit real credentials
+.env
+.env.local
+
+# Local Spec Driven Development notes
+CLAUDE.md
+PLAN.md
