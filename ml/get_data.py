@@ -10,14 +10,25 @@ Usage:
 """
 
 import glob
+import io
 import os
 import zipfile
 
 import pandas as pd
+import psycopg
 
 # Configuration
 RAW_DIR = os.path.join(os.path.dirname(__file__), "data", "raw")
 TRAINING_CSV = os.path.join(os.path.dirname(__file__), "training_data.csv")
+
+# Same database application.yaml points at (host port 5434, per docker-compose).
+# Read from the environment so a real deployment never needs this default.
+DSN = os.environ.get(
+    "DB_DSN", "postgresql://latebird:latebird@localhost:5434/latebird"
+)
+
+# Rows per COPY chunk. Keeps peak memory flat regardless of corpus size.
+COPY_CHUNK_SIZE = 100_000
 
 # The 30 busiest US airports, pinned rather than derived from the data.
 # The filter requires BOTH endpoints to be in this set. Requiring only one
@@ -94,6 +105,24 @@ TRAINING_COLUMNS = [
     "late_aircraft_delay",
     "dep_hour", "day_of_week", "month",
     "crs_elapsed_time", "delay_ratio", "recovery",
+]
+
+# The `flights` columns COPY writes, in the order the CSV rows are generated.
+# Not in this list, on purpose:
+#   id         - Postgres generates it
+#   callsign   - OpenSky's field; BTS has no callsign
+#   cluster_id - Phase 3 assigns it
+# dep_hour and crs_elapsed_time are absent too: both are derivable, so they
+# live in the training CSV rather than being stored.
+FLIGHT_COLUMNS = [
+    "flight_number", "carrier_iata", "origin", "dest", "flight_date",
+    "crs_dep_time", "dep_time", "crs_arr_time", "arr_time",
+    "dep_delay_min", "arr_delay_min",
+    "cancelled", "diverted",
+    "carrier_delay", "weather_delay", "nas_delay", "security_delay",
+    "late_aircraft_delay",
+    "distance", "day_of_week", "month", "taxi_out", "taxi_in",
+    "source",
 ]
 
 
@@ -202,10 +231,50 @@ def summarize(df, training):
     print(f"{'=' * 70}")
 
 
+# Postgres load
+def load_to_postgres(df):
+    """Bulk-load every row into `flights` using COPY.
+
+    COPY streams rows straight into the table in one statement instead of
+    running 871k INSERTs. That is the whole reason the bulk load lives in
+    Python: the equivalent JPA path is the Java BtsImportService, and the
+    speed difference between them is the point.
+    """
+    print(f"\nLoading {len(df):,} rows into Postgres...")
+
+    # Idempotency: re-running this script must not double the table or trip
+    # uk_flights_operation. Only BTS rows are cleared — OpenSky rows arrive
+    # in Phase 5 through a different path and must survive a reload.
+    with psycopg.connect(DSN) as conn, conn.cursor() as cur:
+        cur.execute("DELETE FROM flights WHERE source = 'BTS'")
+        print(f"  cleared {cur.rowcount:,} existing BTS rows")
+
+        columns = ", ".join(FLIGHT_COLUMNS)
+        copy_sql = f"COPY flights ({columns}) FROM STDIN WITH (FORMAT csv, NULL '')"
+
+        with cur.copy(copy_sql) as copy:
+            # Chunked so we never hold a ~100MB CSV string in memory at once.
+            for start in range(0, len(df), COPY_CHUNK_SIZE):
+                chunk = df.iloc[start:start + COPY_CHUNK_SIZE]
+                buffer = io.StringIO()
+                # header=False: COPY expects data rows only.
+                # na_rep='': nulls must be empty fields to match NULL '' above.
+                chunk[FLIGHT_COLUMNS].to_csv(
+                    buffer, index=False, header=False, na_rep=""
+                )
+                copy.write(buffer.getvalue())
+                print(f"  copied {min(start + COPY_CHUNK_SIZE, len(df)):>8,} / {len(df):,}")
+
+        conn.commit()
+
+    print("Load complete.")
+
+
 def main():
     df = load_all()
     training = build_training_set(df)
     summarize(df, training)
+    load_to_postgres(df)
     training.to_csv(TRAINING_CSV, index=False, na_rep="")
     size_mb = os.path.getsize(TRAINING_CSV) / 1_000_000
     print(f"\nWrote {TRAINING_CSV}  ({size_mb:.1f} MB)")
