@@ -8,6 +8,13 @@ server/target/
 .vscode/
 .DS_Store
 
+# Python
+ml/.venv/
+__pycache__/
+
+# Raw BTS downloads — ~200MB per month, and reproducible from TranStats.
+ml/data/raw/
+
 # Environment / secrets — never commit real credentials
 .env
 .env.local
