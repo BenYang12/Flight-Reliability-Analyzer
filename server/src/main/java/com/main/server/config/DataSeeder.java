@@ -4,6 +4,7 @@ import com.main.server.entity.Airport;
 import com.main.server.entity.Carrier;
 import com.main.server.repository.AirportRepository;
 import com.main.server.repository.CarrierRepository;
+import com.main.server.service.BtsImportService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,11 +32,22 @@ public class DataSeeder implements CommandLineRunner {
     // object cannot exist in a half-built state, and it stays testable.
     private final AirportRepository airportRepository;
     private final CarrierRepository carrierRepository;
+    private final BtsImportService btsImportService;
 
     @Override
     public void run(String... args) throws IOException {
         seedAirports();
         seedCarriers();
+
+        // Optional incremental BTS refresh, off unless asked for:
+        //   ./mvnw spring-boot:run -Dspring-boot.run.arguments=--bts-import=<file>
+        // The bulk load of all four months is ml/get_data.py; this path is for
+        // topping up a single corrected day or a newly published month.
+        for (String arg : args) {
+            if (arg.startsWith("--bts-import=")) {
+                btsImportService.importFile(Path.of(arg.substring("--bts-import=".length())));
+            }
+        }
     }
 
     private void seedAirports() throws IOException {

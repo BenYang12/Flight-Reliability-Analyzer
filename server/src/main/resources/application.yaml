@@ -20,6 +20,15 @@ spring:
       hibernate:
         format_sql: true
 
+        jdbc:
+          batch_size: 50
+
+        # Hibernate batches only CONSECUTIVE statements against the same table.
+        # Sorting by type first means one uninterrupted run of flight INSERTs
+        # rather than a batch broken every time a different statement appears.
+        order_inserts: true
+        order_updates: true
+
 server:
   port: ${SERVER_PORT:8081}
 

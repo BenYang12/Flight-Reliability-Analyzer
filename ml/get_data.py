@@ -108,12 +108,11 @@ TRAINING_COLUMNS = [
 ]
 
 # The `flights` columns COPY writes, in the order the CSV rows are generated.
-# Not in this list, on purpose:
+# Not in this list:
 #   id         - Postgres generates it
-#   callsign   - OpenSky's field; BTS has no callsign
+#   callsign   - OpenSky's field only
 #   cluster_id - Phase 3 assigns it
-# dep_hour and crs_elapsed_time are absent too: both are derivable, so they
-# live in the training CSV rather than being stored.
+# dep_hour and crs_elapsed_time are absent too: both are derivable, so they live in the training CSV rather than being stored.
 FLIGHT_COLUMNS = [
     "flight_number", "carrier_iata", "origin", "dest", "flight_date",
     "crs_dep_time", "dep_time", "crs_arr_time", "arr_time",
@@ -130,7 +129,6 @@ FLIGHT_COLUMNS = [
 def csv_handle(path):
     if not path.endswith(".zip"):
         return open(path, "rb")
-
     archive = zipfile.ZipFile(path)
     members = [n for n in archive.namelist() if n.lower().endswith(".csv")]
     if len(members) != 1:
@@ -242,9 +240,7 @@ def load_to_postgres(df):
     """
     print(f"\nLoading {len(df):,} rows into Postgres...")
 
-    # Idempotency: re-running this script must not double the table or trip
-    # uk_flights_operation. Only BTS rows are cleared — OpenSky rows arrive
-    # in Phase 5 through a different path and must survive a reload.
+    # Idempotency
     with psycopg.connect(DSN) as conn, conn.cursor() as cur:
         cur.execute("DELETE FROM flights WHERE source = 'BTS'")
         print(f"  cleared {cur.rowcount:,} existing BTS rows")
@@ -253,12 +249,9 @@ def load_to_postgres(df):
         copy_sql = f"COPY flights ({columns}) FROM STDIN WITH (FORMAT csv, NULL '')"
 
         with cur.copy(copy_sql) as copy:
-            # Chunked so we never hold a ~100MB CSV string in memory at once.
             for start in range(0, len(df), COPY_CHUNK_SIZE):
                 chunk = df.iloc[start:start + COPY_CHUNK_SIZE]
                 buffer = io.StringIO()
-                # header=False: COPY expects data rows only.
-                # na_rep='': nulls must be empty fields to match NULL '' above.
                 chunk[FLIGHT_COLUMNS].to_csv(
                     buffer, index=False, header=False, na_rep=""
                 )
