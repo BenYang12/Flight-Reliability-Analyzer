@@ -1,2 +1,6 @@
 pandas==3.0.5
 psycopg[binary]==3.2.3
+
+# Phase 3: Kmeans clustering model
+scikit-learn==1.9.0
+joblib==1.5.3
