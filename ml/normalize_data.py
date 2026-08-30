@@ -13,11 +13,42 @@ Nothing here names or interprets a cluster. Numbered groups are the only deliver
 """
 
 import os
+import joblib
 import pandas as pd
+from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
 # Config
-TRAINING_CSV = os.path.join(os.path.dirname(__file__), "training_data.csv")
+HERE = os.path.dirname(__file__)
+TRAINING_CSV = os.path.join(HERE, "training_data.csv")
+CLUSTERED_CSV = os.path.join(HERE, "clustered_data.csv")
+
+# The model is useless without the scaler that produced its centers, so the two
+# are written together and must always travel together. Phase 4 moves both into
+# flight-analyzer/, where Flask loads them; nothing at deploy time retrains.
+MODEL_PKL = os.path.join(HERE, "kmeans_model.pkl")
+SCALER_PKL = os.path.join(HERE, "scaler.pkl")
+
+# I hand KMeans a number of groups and it obeys. Thus, I have to justify it.
+
+# Sweeping k=3..10 (elbow + silhouette):
+#   - the elbow was inconclusive.
+#   - k=3 scored a misleadingly high silhouette (0.44) by parking 88.5% of
+#     flights in one cluster. Would lead to useless model
+#   - across k=4..10 silhouette was flat (0.10-0.13), so it could not decide either.
+
+# With both tests inconclusive, the tiebreaker was interpretability.
+# k=6 splits the two large "clean flight" groups by departure hour rather than by
+# calendar month: 8:48am departures land 7.6 min early, 5:36pm departures land 0.9 min late. That is the late-aircraft cascade emerging on its own, and it is the single largest cause of
+# US delay minutes
+N_CLUSTERS = 6
+
+# Pins cluster numbering across runs
+RANDOM_STATE = 42
+
+# Try 10 different random starts and keep the best. KMeans can converge to a poor
+# local solution from an unlucky start!
+N_INIT = 10
 
 # 14 Model Features
 # Once I decided to exclude...
@@ -53,6 +84,7 @@ CAUSE_COLUMNS = [
 ]
 
 
+
 def normalize():
     df = pd.read_csv(TRAINING_CSV)
 
@@ -66,3 +98,38 @@ def normalize():
     scaled = scaler.fit_transform(features)
 
     return df, scaled, scaler
+
+# hand 200,000 x 14 scaled matrix to KMeans, ask for 6 groups, and get back...
+# 1. model
+# 2. labels
+def run_k_means(scaled):
+    """Fit KMeans on the scaled matrix. Returns the trained model and one cluster
+    number per flight, in the same row order as the training frame."""
+    model = KMeans(n_clusters=N_CLUSTERS, random_state=RANDOM_STATE, n_init=N_INIT)
+
+    # fit_predict = fit (find the 6 cluster centers) then predict (assign every row to its nearest center), in one pass. 
+    # Returns a numpy array of 200,000
+    # integers are arbitrary labels
+    labels = model.fit_predict(scaled)
+
+    return model, labels
+
+
+
+# return new clustered_data.csv which is essentially cluster column stapeled on to original training dataset.
+def export_labeled_data(df, labels, model, scaler):
+    # .copy() so the caller's frame is left untouched
+    labeled = df.copy()
+    labeled["cluster"] = labels
+
+    # index=False: pandas writes its row numbers as an unnamed first column
+    # otherwise, which reads as a stray field to anything parsing this later.
+    labeled.to_csv(CLUSTERED_CSV, index=False)
+
+
+
+    # serialize an arbitrary Python object and save it to a file on disk.
+    joblib.dump(model, MODEL_PKL)
+    joblib.dump(scaler, SCALER_PKL)
+
+    return labeled
