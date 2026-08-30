@@ -17,7 +17,7 @@ import zipfile
 import pandas as pd
 import psycopg
 
-# Configuration
+# Config
 RAW_DIR = os.path.join(os.path.dirname(__file__), "data", "raw")
 TRAINING_CSV = os.path.join(os.path.dirname(__file__), "training_data.csv")
 
@@ -234,9 +234,8 @@ def load_to_postgres(df):
     """Bulk-load every row into `flights` using COPY.
 
     COPY streams rows straight into the table in one statement instead of
-    running 871k INSERTs. That is the whole reason the bulk load lives in
-    Python: the equivalent JPA path is the Java BtsImportService, and the
-    speed difference between them is the point.
+    running 871k INSERTs. 
+
     """
     print(f"\nLoading {len(df):,} rows into Postgres...")
 
