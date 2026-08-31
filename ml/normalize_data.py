@@ -8,7 +8,7 @@ Phase 3 turns it into clusters, which will involve three steps....
 2. run_k_means() -> fit clustering model
 3. export_labeled_data() -> write labeled CSV (training rows + cluster assigned to each flight) and persist scaler + model (save trained clustering model)
 
-Nothing here names or interprets a cluster. Numbered groups are the only deliverable for now
+Nothing here names or interprets a cluster. Numbered groups are the only deliverable at this point
 
 """
 
@@ -23,11 +23,8 @@ HERE = os.path.dirname(__file__)
 TRAINING_CSV = os.path.join(HERE, "training_data.csv")
 CLUSTERED_CSV = os.path.join(HERE, "clustered_data.csv")
 
-# The model is useless without the scaler that produced its centers, so the two
-# are written together and must always travel together. Both now land in
-# flight-analyzer/ alongside thresholds.json: Flask is the only thing that reads
-# them, and the deploy target does not retrain. Writing them there directly rather
-# than copying means there is never a stale second copy to diverge from.
+# The model is useless without the scaler 
+# Target for both is flight-analyzer/ alongside thresholds.json.
 ANALYZER_DIR = os.path.join(HERE, os.pardir, "flight-analyzer")
 MODEL_PKL = os.path.join(ANALYZER_DIR, "kmeans_model.pkl")
 SCALER_PKL = os.path.join(ANALYZER_DIR, "scaler.pkl")
@@ -77,11 +74,8 @@ FEATURES = [
     "delay_ratio", "recovery",
 ]
 
-# BTS only requires a carrier to attribute a cause when arrival delay is 15+
-# minutes, so these four columns are null on roughly 75% of rows. 
-# Null here means "no reportable delay from this cause," which is genuinely zero
-# minutes. Thus, filling with 0 will record the fact rather than inventing one.
-# Dropping the null rows instead would delete every on-time flight and leave a model that has never seen a clean operation.
+# fill these with 0, instead of deleting
+# null -> clean operation, I want this in my model. 
 CAUSE_COLUMNS = [
     "carrier_delay", "weather_delay", "nas_delay", "late_aircraft_delay",
 ]
@@ -110,16 +104,15 @@ def run_k_means(scaled):
     number per flight, in the same row order as the training frame."""
     model = KMeans(n_clusters=N_CLUSTERS, random_state=RANDOM_STATE, n_init=N_INIT)
 
-    # fit_predict = fit (find the 6 cluster centers) then predict (assign every row to its nearest center), in one pass. 
-    # Returns a numpy array of 200,000
-    # integers are arbitrary labels
     labels = model.fit_predict(scaled)
 
     return model, labels
 
 
 
-# return new clustered_data.csv which is essentially cluster column stapeled on to original training dataset.
+# persists artifacts
+# KMeans model trained on scaled values cannot safely consume raw values
+# Scaler and Model form one versioned unit
 def export_labeled_data(df, labels, model, scaler):
     # .copy() so the caller's frame is left untouched
     labeled = df.copy()

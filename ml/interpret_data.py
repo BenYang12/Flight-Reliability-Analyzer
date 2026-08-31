@@ -83,6 +83,7 @@ PERFORMANCE_FEATURES = [f for f in FEATURES if f not in CONTEXT_FEATURES]
 
 
 #l load clustered_data.csv with 0s filled in for clean flights
+
 def load_clustered():
     """Read clustered_data.csv and apply the same null handling training used."""
     df = pd.read_csv(CLUSTERED_CSV)
@@ -93,10 +94,8 @@ def load_clustered():
 # p25/p50/p75 of every performance feature across all 200k flights
 # Returned as {feature: {"p25": ..., "p50": ..., "p75": ...}}.
 def corpus_percentiles(df):
-    # .quantile() on a DataFrame returns a frame indexed by percentile, one column
-    # per feature. Transposing puts features on the rows, which is the shape the
-    # dict comprehension below wants.
-    quantiles = df[PERFORMANCE_FEATURES].quantile(PERCENTILES).T
+    # .quantile(PERCENTILES) calculates all three percentiles for every selected column
+    quantiles = df[PERFORMANCE_FEATURES].quantile(PERCENTILES).T #transpose result so each feature becomes a row
 
     return {
         feature: {
@@ -109,8 +108,7 @@ def corpus_percentiles(df):
         for feature, row in quantiles.iterrows()
     }
 
-# p25/p50/p75 of each BTS cause, AMONG flights that experienced that cause.
-# restricting to arr_delay > 5 to fix carrier/NAS/late-aircraft but NOT WEATHER
+# delay-cause percentiles are calculated only among flights that actually experience that cause
 def cause_percentiles(df):
     return {
         cause: {
@@ -136,14 +134,11 @@ def corpus_reference(df):
 # Two stages in order:
 """
     1. Is this cluster on time more often than the corpus is? If so it does not
-        HAVE a cause, and asking "why is it late" produces nonsense. I'll use max() to establish a floor.
-
+        HAVE a cause, and asking "why is it late" produces nonsense. 
         Clean clusters are then split by departure hour, because that is what
         KMeans itself used to separate them.
 
-    2. Only once a cluster is late more often than the corpus does the dominant
-        BTS cause get consulted, and there it is ground truth, because the
-        carrier filed it, not something I inferred from a chart.
+    2. Only once a cluster is late more often than the corpus do I assign it its larget average BTS cause
 """
 def name_cluster(profile, reference):
     
@@ -157,11 +152,6 @@ def name_cluster(profile, reference):
 
 
 def describe_cluster(profile, rule_outcome):
-    """A one-line description built from the cluster's own numbers.
-
-    Every number in the sentence is measured, so the description cannot drift away
-    from the data the way a hand-written blurb would.
-    """
     means = profile["means"]
     on_time = f"{profile['on_time_rate']:.0%} on time"
 
@@ -186,8 +176,8 @@ def describe_cluster(profile, rule_outcome):
     )
 
 
-# One profile per cluster: size, share, feature means, the four BTS cause averages, dominant_cause, and on-time rate
-# dominant_cause field is whole point.
+# Core profiling function
+# For each cluster, calculate Flight Count, Corpus Share, Mean of every model feature, Mean minutes of every BTS cause, dominant cause, etc.
 def cluster_profiles(df):
     profiles = {}
 
@@ -197,7 +187,9 @@ def cluster_profiles(df):
 
         # Average minutes attributed to each of the four BTS causes, largest first.
         cause_means = {cause: round(means[cause], 2) for cause in CAUSE_COLUMNS}
-        dominant_cause = max(cause_means, key=cause_means.get)
+        dominant_cause = max(cause_means, key=cause_means.get) #compares dictionary values while returning corresponding key.
+        
+        #e.g. dominant_cause == "nas_delay"
 
         profiles[int(cluster_id)] = {
             "n": len(rows),

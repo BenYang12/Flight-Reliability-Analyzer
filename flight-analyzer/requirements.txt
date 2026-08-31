@@ -1,0 +1,16 @@
+# The Flask service loads the model; it never fits one.
+
+Flask==3.1.3
+
+# Pinned to EXACTLY the versions ml/ trained with. joblib unpickles a scikit-learn
+# object by reconstructing its classes, so a different scikit-learn here either
+# warns about a version mismatch or silently rebuilds the estimator differently.
+# These two lines must move in lockstep with ml/requirements.txt.
+scikit-learn==1.9.0
+joblib==1.5.3
+
+# One-row DataFrames, so scikit-learn can validate feature names on every request.
+pandas==3.0.5
+
+# The finishing layer: phrases a finished fact list. Never sees a statistic.
+anthropic==1.2.0
