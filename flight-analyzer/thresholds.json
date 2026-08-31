@@ -1,0 +1,425 @@
+{
+  "generated_from": {
+    "rows": 200000,
+    "clusters": 6,
+    "min_sample_size": 2000
+  },
+  "on_time_minutes": 15,
+  "corpus_on_time_rate": 0.7628,
+  "clusters": {
+    "0": {
+      "name": "Congestion-Bound",
+      "description": "4% on time; arrives 66 min late on average, 50 min of it attributed to nas.",
+      "n": 13149,
+      "share": 0.0657,
+      "on_time_rate": 0.0408,
+      "dominant_cause": "nas_delay"
+    },
+    "1": {
+      "name": "Evening Recovery",
+      "description": "78% on time; departs around 18:00 roughly 11 min late but makes back 10 min in the air.",
+      "n": 81361,
+      "share": 0.4068,
+      "on_time_rate": 0.7776,
+      "dominant_cause": "late_aircraft_delay"
+    },
+    "2": {
+      "name": "Carrier Meltdown",
+      "description": "0% on time; arrives 762 min late on average, 487 min of it attributed to carrier.",
+      "n": 394,
+      "share": 0.002,
+      "on_time_rate": 0.0,
+      "dominant_cause": "carrier_delay"
+    },
+    "3": {
+      "name": "Clean Morning Operation",
+      "description": "92% on time; departs around 9:00 and arrives 8 min early on average.",
+      "n": 96981,
+      "share": 0.4849,
+      "on_time_rate": 0.9153,
+      "dominant_cause": "carrier_delay"
+    },
+    "4": {
+      "name": "Late-Aircraft Cascade",
+      "description": "0% on time; arrives 159 min late on average, 99 min of it attributed to late aircraft.",
+      "n": 8056,
+      "share": 0.0403,
+      "on_time_rate": 0.0,
+      "dominant_cause": "late_aircraft_delay"
+    },
+    "5": {
+      "name": "Weather-Stranded",
+      "description": "0% on time; arrives 711 min late on average, 642 min of it attributed to weather.",
+      "n": 59,
+      "share": 0.0003,
+      "on_time_rate": 0.0,
+      "dominant_cause": "weather_delay"
+    }
+  },
+  "thresholds": {
+    "Congestion-Bound": {
+      "dep_delay_min": {
+        "p25": -2.0,
+        "p50": 13.0,
+        "p75": 56.0
+      },
+      "arr_delay_min": {
+        "p25": 28.0,
+        "p50": 49.0,
+        "p75": 84.0
+      },
+      "taxi_out": {
+        "p25": 23.0,
+        "p50": 38.0,
+        "p75": 53.0
+      },
+      "taxi_in": {
+        "p25": 7.0,
+        "p50": 11.0,
+        "p75": 24.0
+      },
+      "carrier_delay": {
+        "p25": 8.0,
+        "p50": 17.0,
+        "p75": 38.0
+      },
+      "weather_delay": {
+        "p25": 15.0,
+        "p50": 33.0,
+        "p75": 75.0
+      },
+      "nas_delay": {
+        "p25": 10.0,
+        "p50": 20.0,
+        "p75": 38.0
+      },
+      "late_aircraft_delay": {
+        "p25": 16.0,
+        "p50": 32.0,
+        "p75": 66.0
+      },
+      "delay_ratio": {
+        "p25": 0.164,
+        "p50": 0.298,
+        "p75": 0.554
+      },
+      "recovery": {
+        "p25": -39.0,
+        "p50": -27.0,
+        "p75": -18.0
+      }
+    },
+    "Evening Recovery": {
+      "dep_delay_min": {
+        "p25": -5.0,
+        "p50": 0.0,
+        "p75": 19.0
+      },
+      "arr_delay_min": {
+        "p25": -16.0,
+        "p50": -4.0,
+        "p75": 13.0
+      },
+      "taxi_out": {
+        "p25": 14.0,
+        "p50": 17.0,
+        "p75": 22.0
+      },
+      "taxi_in": {
+        "p25": 5.0,
+        "p50": 8.0,
+        "p75": 11.0
+      },
+      "carrier_delay": {
+        "p25": 8.0,
+        "p50": 17.0,
+        "p75": 38.0
+      },
+      "weather_delay": {
+        "p25": 15.0,
+        "p50": 33.0,
+        "p75": 75.0
+      },
+      "nas_delay": {
+        "p25": 10.0,
+        "p50": 20.0,
+        "p75": 38.0
+      },
+      "late_aircraft_delay": {
+        "p25": 16.0,
+        "p50": 32.0,
+        "p75": 66.0
+      },
+      "delay_ratio": {
+        "p25": -0.094,
+        "p50": -0.024,
+        "p75": 0.074
+      },
+      "recovery": {
+        "p25": 2.0,
+        "p50": 10.0,
+        "p75": 17.0
+      }
+    },
+    "Carrier Meltdown": {
+      "dep_delay_min": {
+        "p25": -5.0,
+        "p50": -1.0,
+        "p75": 14.0
+      },
+      "arr_delay_min": {
+        "p25": -17.0,
+        "p50": -5.0,
+        "p75": 14.0
+      },
+      "taxi_out": {
+        "p25": 14.0,
+        "p50": 17.0,
+        "p75": 23.0
+      },
+      "taxi_in": {
+        "p25": 5.0,
+        "p50": 8.0,
+        "p75": 12.0
+      },
+      "carrier_delay": {
+        "p25": 8.0,
+        "p50": 17.0,
+        "p75": 38.0
+      },
+      "weather_delay": {
+        "p25": 15.0,
+        "p50": 33.0,
+        "p75": 75.0
+      },
+      "nas_delay": {
+        "p25": 10.0,
+        "p50": 20.0,
+        "p75": 38.0
+      },
+      "late_aircraft_delay": {
+        "p25": 16.0,
+        "p50": 32.0,
+        "p75": 66.0
+      },
+      "delay_ratio": {
+        "p25": -0.099,
+        "p50": -0.03,
+        "p75": 0.08
+      },
+      "recovery": {
+        "p25": 0.0,
+        "p50": 9.0,
+        "p75": 16.0
+      }
+    },
+    "Clean Morning Operation": {
+      "dep_delay_min": {
+        "p25": -6.0,
+        "p50": -3.0,
+        "p75": 2.0
+      },
+      "arr_delay_min": {
+        "p25": -19.0,
+        "p50": -10.0,
+        "p75": 0.0
+      },
+      "taxi_out": {
+        "p25": 14.0,
+        "p50": 17.0,
+        "p75": 21.0
+      },
+      "taxi_in": {
+        "p25": 5.0,
+        "p50": 8.0,
+        "p75": 12.0
+      },
+      "carrier_delay": {
+        "p25": 8.0,
+        "p50": 17.0,
+        "p75": 38.0
+      },
+      "weather_delay": {
+        "p25": 15.0,
+        "p50": 33.0,
+        "p75": 75.0
+      },
+      "nas_delay": {
+        "p25": 10.0,
+        "p50": 20.0,
+        "p75": 38.0
+      },
+      "late_aircraft_delay": {
+        "p25": 16.0,
+        "p50": 32.0,
+        "p75": 66.0
+      },
+      "delay_ratio": {
+        "p25": -0.117,
+        "p50": -0.059,
+        "p75": 0.0
+      },
+      "recovery": {
+        "p25": 2.0,
+        "p50": 9.0,
+        "p75": 16.0
+      }
+    },
+    "Late-Aircraft Cascade": {
+      "dep_delay_min": {
+        "p25": 110.0,
+        "p50": 141.0,
+        "p75": 196.0
+      },
+      "arr_delay_min": {
+        "p25": 102.0,
+        "p50": 135.0,
+        "p75": 189.0
+      },
+      "taxi_out": {
+        "p25": 14.0,
+        "p50": 18.0,
+        "p75": 24.0
+      },
+      "taxi_in": {
+        "p25": 5.0,
+        "p50": 8.0,
+        "p75": 11.0
+      },
+      "carrier_delay": {
+        "p25": 8.0,
+        "p50": 17.0,
+        "p75": 38.0
+      },
+      "weather_delay": {
+        "p25": 15.0,
+        "p50": 33.0,
+        "p75": 75.0
+      },
+      "nas_delay": {
+        "p25": 10.0,
+        "p50": 20.0,
+        "p75": 38.0
+      },
+      "late_aircraft_delay": {
+        "p25": 16.0,
+        "p50": 32.0,
+        "p75": 66.0
+      },
+      "delay_ratio": {
+        "p25": 0.632,
+        "p50": 0.899,
+        "p75": 1.329
+      },
+      "recovery": {
+        "p25": -1.0,
+        "p50": 8.0,
+        "p75": 17.0
+      }
+    },
+    "Weather-Stranded": {
+      "dep_delay_min": {
+        "p25": -5.0,
+        "p50": -1.0,
+        "p75": 14.0
+      },
+      "arr_delay_min": {
+        "p25": -17.0,
+        "p50": -5.0,
+        "p75": 14.0
+      },
+      "taxi_out": {
+        "p25": 14.0,
+        "p50": 17.0,
+        "p75": 23.0
+      },
+      "taxi_in": {
+        "p25": 5.0,
+        "p50": 8.0,
+        "p75": 12.0
+      },
+      "carrier_delay": {
+        "p25": 8.0,
+        "p50": 17.0,
+        "p75": 38.0
+      },
+      "weather_delay": {
+        "p25": 15.0,
+        "p50": 33.0,
+        "p75": 75.0
+      },
+      "nas_delay": {
+        "p25": 10.0,
+        "p50": 20.0,
+        "p75": 38.0
+      },
+      "late_aircraft_delay": {
+        "p25": 16.0,
+        "p50": 32.0,
+        "p75": 66.0
+      },
+      "delay_ratio": {
+        "p25": -0.099,
+        "p50": -0.03,
+        "p75": 0.08
+      },
+      "recovery": {
+        "p25": 0.0,
+        "p50": 9.0,
+        "p75": 16.0
+      }
+    },
+    "DEFAULT": {
+      "dep_delay_min": {
+        "p25": -5.0,
+        "p50": -1.0,
+        "p75": 14.0
+      },
+      "arr_delay_min": {
+        "p25": -17.0,
+        "p50": -5.0,
+        "p75": 14.0
+      },
+      "taxi_out": {
+        "p25": 14.0,
+        "p50": 17.0,
+        "p75": 23.0
+      },
+      "taxi_in": {
+        "p25": 5.0,
+        "p50": 8.0,
+        "p75": 12.0
+      },
+      "carrier_delay": {
+        "p25": 8.0,
+        "p50": 17.0,
+        "p75": 38.0
+      },
+      "weather_delay": {
+        "p25": 15.0,
+        "p50": 33.0,
+        "p75": 75.0
+      },
+      "nas_delay": {
+        "p25": 10.0,
+        "p50": 20.0,
+        "p75": 38.0
+      },
+      "late_aircraft_delay": {
+        "p25": 16.0,
+        "p50": 32.0,
+        "p75": 66.0
+      },
+      "delay_ratio": {
+        "p25": -0.099,
+        "p50": -0.03,
+        "p75": 0.08
+      },
+      "recovery": {
+        "p25": 0.0,
+        "p50": 9.0,
+        "p75": 16.0
+      }
+    }
+  }
+}

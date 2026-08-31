@@ -8,7 +8,6 @@ Corpus Percentiles:
 - Here, "corpus" is roughly 200,000 flights in my training dataset
 - ex. if taxi-out p75 were 24 minutes, flight with 30 minute taxi-out would be unusually high. 
 
-
 I need to use Corpus Percentiles to interpret numbered clusters in understandable terms. 
 They translate raw measurements and arbitrary cluster numbers into evidence-based, traveler-friendly descriptions relative to what is normal in my flight dataset
 - unusually long taxi-out
@@ -26,7 +25,7 @@ clustered_data.csv -> per-cluster profiles + corpus percentiles -> thresholds.js
 Phase 3 handed back six numbered clusters. A number is not an answer: "your flight
 is a cluster 4" means nothing to a traveler.
 
-Phase 4 fixes that in two steps:
+Phase 4 fixes that in two steps by reading clustered_data.csv:
 
   1. MEASURE  - profile every cluster and compute the corpus
      percentiles that every later rule threshold is derived from.
@@ -40,18 +39,35 @@ Usage:
     python interpret_data.py
 """
 
+import json
 import os
-
 import pandas as pd
 
 
 from normalize_data import CAUSE_COLUMNS, FEATURES
 
-# Config
+# read clustered_data.csv
 HERE = os.path.dirname(__file__)
 CLUSTERED_CSV = os.path.join(HERE, "clustered_data.csv")
 
-# The percentiles every rule threshold is derived from. p25/p75 mark "low for this corpus" and "high for this corpus"
+ANALYZER_DIR = os.path.join(HERE, os.pardir, "flight-analyzer")
+THRESHOLDS_JSON = os.path.join(ANALYZER_DIR, "thresholds.json")
+
+# Hardcoded FAA definition of an on-time arrival
+ON_TIME_MINUTES = 15
+MIN_SAMPLE_SHARE = 0.01
+
+# Archetype names
+ARCHETYPES = {
+    "clean_morning": "Clean Morning Operation",
+    "evening_recovery": "Evening Recovery",
+    "nas_delay": "Congestion-Bound",
+    "late_aircraft_delay": "Late-Aircraft Cascade",
+    "carrier_delay": "Carrier Meltdown",
+    "weather_delay": "Weather-Stranded",
+}
+
+# percentiles every rule threshold is derived from -> p25/p75 mark "low for this corpus" and "high for this corpus"
 PERCENTILES = [0.25, 0.50, 0.75]
 
 # BTS only requires a carrier to attribute a delay cause when arrival delay is 15+ minutes
@@ -62,10 +78,11 @@ FILL_ZERO = CAUSE_COLUMNS
 # They still belong in the profile table, but a percentile of `month` is not a useful rule.
 CONTEXT_FEATURES = ["distance", "dep_hour", "day_of_week", "month"]
 
-# Everything else: the performance features a rule can meaningfully threshold on.
+# Everything else -> the performance features a rule can meaningfully threshold on.
 PERFORMANCE_FEATURES = [f for f in FEATURES if f not in CONTEXT_FEATURES]
 
 
+#l load clustered_data.csv with 0s filled in for clean flights
 def load_clustered():
     """Read clustered_data.csv and apply the same null handling training used."""
     df = pd.read_csv(CLUSTERED_CSV)
@@ -73,12 +90,9 @@ def load_clustered():
     return df
 
 
+# p25/p50/p75 of every performance feature across all 200k flights
+# Returned as {feature: {"p25": ..., "p50": ..., "p75": ...}}.
 def corpus_percentiles(df):
-    """p25/p50/p75 of every performance feature, across all flights.
-
-    This is the DEFAULT threshold set: what "high" and "low" mean when we have no
-    better reference. Returned as {feature: {"p25": ..., "p50": ..., "p75": ...}}.
-    """
     # .quantile() on a DataFrame returns a frame indexed by percentile, one column
     # per feature. Transposing puts features on the rows, which is the shape the
     # dict comprehension below wants.
@@ -95,15 +109,86 @@ def corpus_percentiles(df):
         for feature, row in quantiles.iterrows()
     }
 
+# p25/p50/p75 of each BTS cause, AMONG flights that experienced that cause.
+# restricting to arr_delay > 5 to fix carrier/NAS/late-aircraft but NOT WEATHER
+def cause_percentiles(df):
+    return {
+        cause: {
+            "p25": round(nonzero.quantile(0.25), 3),
+            "p50": round(nonzero.quantile(0.50), 3),
+            "p75": round(nonzero.quantile(0.75), 3),
+        }
+        for cause in CAUSE_COLUMNS
+        for nonzero in [df.loc[df[cause] > 0, cause]]
+    }
 
-def cluster_profiles(df):
-    """One profile per cluster: how big it is, what it averages, and why it is late.
 
-    The `dominant_cause` field is the whole point of the exercise. BTS makes every
-    carrier attribute delay minutes to one of four causes, so a cluster's largest
-    average cause is ground truth about what that group of flights has in common -
-    not my interpretation of a scatter plot.
+# two pivots 
+# both measured: on-time rate 0.7628, median dep_hour 13
+def corpus_reference(df):
+    return {
+        "on_time_rate": round((df.arr_delay_min <= ON_TIME_MINUTES).mean(), 4),
+        "dep_hour_p50": float(df.dep_hour.quantile(0.50)),
+    }
+
+
+# Turn one cluster profile into an archetype name, by rule.
+# Two stages in order:
+"""
+    1. Is this cluster on time more often than the corpus is? If so it does not
+        HAVE a cause, and asking "why is it late" produces nonsense. I'll use max() to establish a floor.
+
+        Clean clusters are then split by departure hour, because that is what
+        KMeans itself used to separate them.
+
+    2. Only once a cluster is late more often than the corpus does the dominant
+        BTS cause get consulted, and there it is ground truth, because the
+        carrier filed it, not something I inferred from a chart.
+"""
+def name_cluster(profile, reference):
+    
+    means = profile["means"]
+
+    if profile["on_time_rate"] >= reference["on_time_rate"]:
+        if means["dep_hour"] <= reference["dep_hour_p50"]:
+            return "clean_morning"
+        return "evening_recovery"
+    return profile["dominant_cause"]
+
+
+def describe_cluster(profile, rule_outcome):
+    """A one-line description built from the cluster's own numbers.
+
+    Every number in the sentence is measured, so the description cannot drift away
+    from the data the way a hand-written blurb would.
     """
+    means = profile["means"]
+    on_time = f"{profile['on_time_rate']:.0%} on time"
+
+    if rule_outcome == "clean_morning":
+        return (
+            f"{on_time}; departs around {means['dep_hour']:.0f}:00 and arrives "
+            f"{abs(means['arr_delay_min']):.0f} min early on average."
+        )
+
+    if rule_outcome == "evening_recovery":
+        return (
+            f"{on_time}; departs around {means['dep_hour']:.0f}:00 roughly "
+            f"{means['dep_delay_min']:.0f} min late but makes back "
+            f"{means['recovery']:.0f} min in the air."
+        )
+
+    cause_minutes = profile["cause_means"][rule_outcome]
+    cause_label = rule_outcome.replace("_delay", "").replace("_", " ")
+    return (
+        f"{on_time}; arrives {means['arr_delay_min']:.0f} min late on average, "
+        f"{cause_minutes:.0f} min of it attributed to {cause_label}."
+    )
+
+
+# One profile per cluster: size, share, feature means, the four BTS cause averages, dominant_cause, and on-time rate
+# dominant_cause field is whole point.
+def cluster_profiles(df):
     profiles = {}
 
     # groupby("cluster") splits the frame into six sub-frames, one per cluster id.
@@ -185,11 +270,117 @@ def print_profiles(profiles, corpus):
     print(f"\n{'=' * 78}")
 
 
+def build_thresholds(df, corpus, causes, profiles, reference):
+    """Assemble everything Flask needs into one JSON-serialisable dict.
+
+    Two keys carry the working data, mirroring the shape the Flask service expects
+    (a per-category threshold dict plus a DEFAULT fallback):
+
+      clusters    cluster id -> archetype name, description, and size. This is the
+                  lookup that turns model.predict() == 4 into "Late-Aircraft
+                  Cascade".
+      thresholds  archetype name -> per-feature p25/p50/p75, plus a "DEFAULT"
+                  entry. Flask compares one flight's values against these to build
+                  its phrase list.
+    """
+    min_sample_size = int(len(df) * MIN_SAMPLE_SHARE)
+
+    clusters = {}
+    thresholds = {}
+
+    for cluster_id, profile in profiles.items():
+        outcome = name_cluster(profile, reference)
+        name = ARCHETYPES[outcome]
+
+        # Two clusters resolving to the same archetype would silently overwrite
+        # each other's thresholds below. Cannot happen at k=6 on this corpus, but
+        # this file is re-run whenever the pipeline is, and a silent overwrite is
+        # the kind of bug that surfaces three phases later.
+        assert name not in thresholds, f"two clusters both named {name!r}"
+
+        clusters[str(cluster_id)] = {
+            "name": name,
+            "description": describe_cluster(profile, outcome),
+            "n": profile["n"],
+            "share": profile["share"],
+            "on_time_rate": profile["on_time_rate"],
+            "dominant_cause": profile["dominant_cause"],
+        }
+
+        # Small clusters borrow the corpus percentiles. A "high taxi-out for a
+        # Weather-Stranded flight" derived from 59 rows is a statement about those
+        # 59 rows; the corpus number is the honest fallback.
+        own_thresholds = profile["n"] >= min_sample_size
+        feature_thresholds = dict(profile["percentiles"] if own_thresholds else corpus)
+
+        # Cause thresholds are always the nonzero-corpus ones - identical in every
+        # archetype. "A lot of NAS delay" has to mean the same thing everywhere, or
+        # the phrase is comparing a flight against itself.
+        feature_thresholds.update(causes)
+
+        thresholds[name] = feature_thresholds
+
+    default = dict(corpus)
+    default.update(causes)
+    thresholds["DEFAULT"] = default
+
+    return {
+        # Provenance, so the file explains itself to anyone reading it on GitHub.
+        "generated_from": {
+            "rows": len(df),
+            "clusters": len(profiles),
+            "min_sample_size": min_sample_size,
+        },
+        "on_time_minutes": ON_TIME_MINUTES,
+        "corpus_on_time_rate": reference["on_time_rate"],
+        "clusters": clusters,
+        "thresholds": thresholds,
+    }
+
+
+def write_thresholds(payload):
+    # flight-analyzer/ may not exist yet the first time this runs.
+    os.makedirs(ANALYZER_DIR, exist_ok=True)
+
+    with open(THRESHOLDS_JSON, "w") as f:
+        # indent=2 because this file is committed and meant to be read by a human
+        # browsing the repo, not only parsed by Flask.
+        json.dump(payload, f, indent=2)
+        f.write("\n")
+
+    print(f"\nWrote {os.path.relpath(THRESHOLDS_JSON, HERE)}")
+
+
+def print_names(payload):
+    """The six named clusters, largest first - the deliverable of Phase 4."""
+    print(f"\n{'=' * 78}")
+    print("  NAMED ARCHETYPES")
+    print(f"{'=' * 78}")
+
+    ordered = sorted(payload["clusters"].items(), key=lambda kv: -kv[1]["n"])
+    fallback_below = payload["generated_from"]["min_sample_size"]
+
+    for cluster_id, cluster in ordered:
+        borrowed = "  (thresholds: corpus fallback)" if cluster["n"] < fallback_below else ""
+        print(f"\n  cluster {cluster_id} -> {cluster['name']}{borrowed}")
+        print(f"    {cluster['n']:,} flights ({cluster['share']:.1%})")
+        print(f"    {cluster['description']}")
+
+    print(f"\n{'=' * 78}")
+
+
 def main():
     df = load_clustered()
     corpus = corpus_percentiles(df)
+    causes = cause_percentiles(df)
     profiles = cluster_profiles(df)
+    reference = corpus_reference(df)
+
     print_profiles(profiles, corpus)
+
+    payload = build_thresholds(df, corpus, causes, profiles, reference)
+    print_names(payload)
+    write_thresholds(payload)
 
 
 if __name__ == "__main__":

@@ -24,10 +24,13 @@ TRAINING_CSV = os.path.join(HERE, "training_data.csv")
 CLUSTERED_CSV = os.path.join(HERE, "clustered_data.csv")
 
 # The model is useless without the scaler that produced its centers, so the two
-# are written together and must always travel together. Phase 4 moves both into
-# flight-analyzer/, where Flask loads them; nothing at deploy time retrains.
-MODEL_PKL = os.path.join(HERE, "kmeans_model.pkl")
-SCALER_PKL = os.path.join(HERE, "scaler.pkl")
+# are written together and must always travel together. Both now land in
+# flight-analyzer/ alongside thresholds.json: Flask is the only thing that reads
+# them, and the deploy target does not retrain. Writing them there directly rather
+# than copying means there is never a stale second copy to diverge from.
+ANALYZER_DIR = os.path.join(HERE, os.pardir, "flight-analyzer")
+MODEL_PKL = os.path.join(ANALYZER_DIR, "kmeans_model.pkl")
+SCALER_PKL = os.path.join(ANALYZER_DIR, "scaler.pkl")
 
 # I hand KMeans a number of groups and it obeys. Thus, I have to justify it.
 
@@ -128,7 +131,11 @@ def export_labeled_data(df, labels, model, scaler):
 
 
 
+    # flight-analyzer/ may not exist yet on a first run.
+    os.makedirs(ANALYZER_DIR, exist_ok=True)
+
     # serialize an arbitrary Python object and save it to a file on disk.
+    # .dump() saves and converts trained model into a .pkl (pickle) file
     joblib.dump(model, MODEL_PKL)
     joblib.dump(scaler, SCALER_PKL)
 
