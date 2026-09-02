@@ -242,13 +242,14 @@ def analyze(row, with_summary=False):
 # shown a statistic cannot misreport one; that is a structural guarantee rather than
 # an instruction it might ignore.
 
-MODEL_NAME = "claude-opus-5"
+# Reached through OpenRouter, which serves an Anthropic-Messages-compatible
+# endpoint - so the anthropic SDK below is unchanged and only the model id is
+# namespaced. Point it somewhere else by setting ANTHROPIC_BASE_URL back to the
+# default and using a bare model id; nothing else in this file depends on it.
+MODEL_NAME = "anthropic/claude-haiku-4.5"
 
 # A short paragraph, so the response ceiling is small on purpose.
 MAX_TOKENS = 512
-
-# Low effort: this is word choice over a finished fact list, not reasoning.
-EFFORT = "low"
 
 SYSTEM_PROMPT = """You write one short paragraph for an air traveler about a \
 single flight operation.
@@ -316,7 +317,6 @@ def summarize(archetype, facts):
             model=MODEL_NAME,
             max_tokens=MAX_TOKENS,
             system=SYSTEM_PROMPT,
-            output_config={"effort": EFFORT},
             messages=[{"role": "user", "content": prompt}],
         )
     # AnthropicError is the base of every SDK failure - HTTP status, connection,
