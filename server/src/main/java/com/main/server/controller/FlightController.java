@@ -3,6 +3,7 @@ package com.main.server.controller;
 import com.main.server.dto.AirportDto;
 import com.main.server.dto.AnalyzeServiceDto.Result;
 import com.main.server.dto.FlightAnalysisRequest;
+import com.main.server.dto.OpenSkyFlightDto.Operation;
 import com.main.server.dto.CarrierDto;
 import com.main.server.dto.FlightAnalysisResponse;
 import com.main.server.dto.OptimalWindowResponse;
@@ -12,6 +13,7 @@ import com.main.server.service.AirportService;
 import com.main.server.service.CarrierService;
 import com.main.server.service.FlightAnalysisService;
 import com.main.server.service.FlightService;
+import com.main.server.service.OpenSkyService;
 import com.main.server.service.OptimalWindowService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -23,6 +25,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -48,6 +52,7 @@ public class FlightController {
     private final FlightService flightService;
     private final OptimalWindowService optimalWindowService;
     private final FlightAnalysisService flightAnalysisService;
+    private final OpenSkyService openSkyService;
 
     // GET /api/airports?q=SF
     // @RequestParam is required by default, so a missing q returns 400.
@@ -124,6 +129,33 @@ public class FlightController {
             String dest) {
 
         return optimalWindowService.forRoute(origin, dest);
+    }
+
+    // GET /api/flights/UA1259/operations?page=0&size=20
+    //
+    // RECENT ACTUAL OPERATIONS, not delays. These come from OpenSky's ADS-B
+    // telemetry, which carries no scheduled time anywhere in the API, so nothing
+    // in this response can be a delay. The historical, schedule-based numbers live
+    // at /api/flights/{flightNumber}.
+    @GetMapping("/flights/{flightNumber}/operations")
+    public List<Operation> operations(
+            @PathVariable
+            @Pattern(regexp = FLIGHT_NUMBER_REGEX,
+                     message = "must look like a flight number, e.g. UA523")
+            String flightNumber,
+
+            @RequestParam(defaultValue = "0")
+            @Min(value = 0, message = "must be 0 or greater")
+            int page,
+
+            // Capped: this endpoint is backed by a rate-limited upstream, and an
+            // unbounded size would let one request ask for every cached row.
+            @RequestParam(defaultValue = "20")
+            @Min(value = 1, message = "must be at least 1")
+            @Max(value = 100, message = "must be 100 or less")
+            int size) {
+
+        return openSkyService.recentOperations(flightNumber, page, size);
     }
 
     @PostMapping("/analyze")

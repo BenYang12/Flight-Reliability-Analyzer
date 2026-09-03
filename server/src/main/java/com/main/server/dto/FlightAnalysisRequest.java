@@ -2,6 +2,9 @@ package com.main.server.dto;
 
 import jakarta.validation.constraints.NotNull;
 
+
+// My design
+// Client (POST /api/analyze) -> FlightAnalysisRequest -> FlightAnalysisService -> Python analyzer -> AnalyzeServiceDTO.Result -> Client
 public record FlightAnalysisRequest(
         @NotNull(message = "is required") Integer crsDepTime,
         @NotNull(message = "is required") Integer crsElapsedTime,

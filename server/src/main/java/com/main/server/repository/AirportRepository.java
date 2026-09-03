@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 // JpaRepository is a Spring Data JPA interface that provides common db operations (database access tool)
 // Airport Repository is an object that accesses and manages airport rows
@@ -37,4 +38,8 @@ public interface AirportRepository extends JpaRepository<Airport, String> {
                 a.iata
             """)
     List<Airport> search(@Param("q") String q, Limit limit);
+
+    // IATA -> the airport row. Checkpoint 7 needs the ICAO code that goes with an
+    // IATA code, because OpenSky's airport parameter accepts ICAO only.
+    Optional<Airport> findByIata(String iata);
 }
