@@ -1,5 +1,7 @@
 package com.main.server.dto;
 
+import com.main.server.dto.AnalyzeServiceDto.Result;
+
 import java.time.LocalDate;
 
 // One historical BTS operation, as the API hands it out.
@@ -32,6 +34,8 @@ public record FlightOperationDto(
         Boolean cancelled,
         Boolean diverted,
 
-        Boolean onTime
+        Boolean onTime,
+
+        Result analysis
 ) {
 }

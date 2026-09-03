@@ -51,7 +51,10 @@ opensky:
 
 # The Flask model service in flight-analyzer/ (Checkpoint 6).
 analyzer:
-  base-url: ${ANALYZER_URL:http://localhost:5000}
+  # Port 5001, not Flask's default 5000: macOS binds 5000 for the AirPlay
+  # Receiver with SO_REUSEPORT, so both it and Flask listen and connections go to
+  # whichever wins the race. Start Flask with --port 5001 to match.
+  base-url: ${ANALYZER_URL:http://127.0.0.1:5001}
   # Generous on purpose. A cold Flask service on Render's free tier takes ~50s to
   # answer its first request; timing out at the usual few seconds would report a
   # waking service as a broken one.

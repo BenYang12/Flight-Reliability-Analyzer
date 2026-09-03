@@ -1,5 +1,7 @@
 package com.main.server.mapper;
 
+import com.main.server.dto.AnalyzeServiceDto.Result;
+import com.main.server.dto.AnalyzeServiceDto.Row;
 import com.main.server.dto.FlightOperationDto;
 import com.main.server.entity.Flight;
 
@@ -25,6 +27,10 @@ public final class FlightMapper {
     }
 
     public static FlightOperationDto toDto(Flight f) {
+        return toDto(f, null);
+    }
+
+    public static FlightOperationDto toDto(Flight f, Result analysis) {
         return new FlightOperationDto(
                 f.getFlightDate(),
                 // Reading .getIata() on the LAZY airport association is exactly
@@ -59,8 +65,26 @@ public final class FlightMapper {
                 f.getCancelled(),
                 f.getDiverted(),
 
-                onTime(f)
+                onTime(f),
+                analysis
         );
+    }
+
+    public static Row toRow(Flight f) {
+        return new Row(
+                f.getCrsDepTime(),
+                f.getCrsElapsedTime(),
+                f.getDepDelayMin(),
+                f.getArrDelayMin(),
+                f.getTaxiOut(),
+                f.getTaxiIn(),
+                f.getDistance(),
+                f.getDayOfWeek(),
+                f.getMonth(),
+                f.getCarrierDelay(),
+                f.getWeatherDelay(),
+                f.getNasDelay(),
+                f.getLateAircraftDelay());
     }
 
     // Null rather than false for a flight that never arrived. A cancelled flight

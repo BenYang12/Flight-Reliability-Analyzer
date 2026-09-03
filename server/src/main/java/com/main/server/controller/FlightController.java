@@ -1,6 +1,8 @@
 package com.main.server.controller;
 
 import com.main.server.dto.AirportDto;
+import com.main.server.dto.AnalyzeServiceDto.Result;
+import com.main.server.dto.FlightAnalysisRequest;
 import com.main.server.dto.CarrierDto;
 import com.main.server.dto.FlightAnalysisResponse;
 import com.main.server.dto.OptimalWindowResponse;
@@ -8,16 +10,22 @@ import com.main.server.dto.RouteReliabilityResponse;
 import com.main.server.dto.SearchResponse;
 import com.main.server.service.AirportService;
 import com.main.server.service.CarrierService;
+import com.main.server.service.FlightAnalysisService;
 import com.main.server.service.FlightService;
 import com.main.server.service.OptimalWindowService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -25,8 +33,6 @@ import java.util.List;
 
 // @RestController = @Controller + @ResponseBody: Controller's job is only translating HTTP into a method call
 // It doesn't know SQL exists
-
-
 
 @RestController
 @RequestMapping("/api")
@@ -41,6 +47,7 @@ public class FlightController {
     private final CarrierService carrierService;
     private final FlightService flightService;
     private final OptimalWindowService optimalWindowService;
+    private final FlightAnalysisService flightAnalysisService;
 
     // GET /api/airports?q=SF
     // @RequestParam is required by default, so a missing q returns 400.
@@ -117,5 +124,12 @@ public class FlightController {
             String dest) {
 
         return optimalWindowService.forRoute(origin, dest);
+    }
+
+    @PostMapping("/analyze")
+    public Result analyze(@Valid @RequestBody FlightAnalysisRequest request) {
+        return flightAnalysisService.analyze(request)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                        "The analysis service is unavailable"));
     }
 }

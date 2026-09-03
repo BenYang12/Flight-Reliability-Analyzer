@@ -1,5 +1,6 @@
 package com.main.server.service;
 
+import com.main.server.dto.AnalyzeServiceDto.Result;
 import com.main.server.dto.FlightAnalysisResponse;
 import com.main.server.dto.FlightOperationDto;
 import com.main.server.dto.RouteReliabilityResponse;
@@ -17,7 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,6 +50,7 @@ public class FlightService {
     private static final Pattern ROUTE = Pattern.compile("^([A-Z]{3})[^A-Z0-9]+([A-Z]{3})$");
     private final FlightRepository flightRepository;
     private final RouteReliabilityRepository routeReliabilityRepository;
+    private final FlightAnalysisService flightAnalysisService;
 
 
     // GET /api/flights/{flightNumber}
@@ -73,9 +77,7 @@ public class FlightService {
 
         Flight latest = operations.get(0);
 
-        List<FlightOperationDto> dtos = operations.stream()
-                .map(FlightMapper::toDto)
-                .toList();
+        List<FlightOperationDto> dtos = enrich(operations);
 
         return new FlightAnalysisResponse(
                 number,
@@ -170,6 +172,28 @@ public class FlightService {
         }
 
         return ReliabilityMapper.toResponse(from, to, airline, rows);
+    }
+
+    private List<FlightOperationDto> enrich(List<Flight> operations) {
+        List<Flight> analyzable = operations.stream()
+                .filter(f -> f.getArrDelayMin() != null)
+                .toList();
+
+        List<Result> results = flightAnalysisService.analyzeBatch(
+                analyzable.stream().map(FlightMapper::toRow).toList());
+
+        if (results.isEmpty()) {
+            return operations.stream().map(FlightMapper::toDto).toList();
+        }
+
+        Map<Flight, Result> byFlight = new IdentityHashMap<>();
+        for (int i = 0; i < analyzable.size(); i++) {
+            byFlight.put(analyzable.get(i), results.get(i));
+        }
+
+        return operations.stream()
+                .map(f -> FlightMapper.toDto(f, byFlight.get(f)))
+                .toList();
     }
 
     private static Double onTimeRate(long onTime, long completed) {
