@@ -128,3 +128,62 @@
     @apply font-sans;
   }
 }
+/* Semantic delay palette. Severity is also encoded in text and icon, never color alone. */
+@theme inline {
+  --color-delay-on-time: var(--delay-on-time);
+  --color-delay-on-time-surface: var(--delay-on-time-surface);
+  --color-delay-minor: var(--delay-minor);
+  --color-delay-minor-surface: var(--delay-minor-surface);
+  --color-delay-moderate: var(--delay-moderate);
+  --color-delay-moderate-surface: var(--delay-moderate-surface);
+  --color-delay-severe: var(--delay-severe);
+  --color-delay-severe-surface: var(--delay-severe-surface);
+
+  --text-display: 2.75rem;
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.02em;
+  --text-title: 1.5rem;
+  --text-title--line-height: 1.2;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.6;
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.4;
+}
+
+:root {
+  --delay-on-time: oklch(0.48 0.13 155);
+  --delay-on-time-surface: oklch(0.95 0.04 155);
+  --delay-minor: oklch(0.5 0.11 85);
+  --delay-minor-surface: oklch(0.96 0.05 85);
+  --delay-moderate: oklch(0.52 0.16 48);
+  --delay-moderate-surface: oklch(0.95 0.05 48);
+  --delay-severe: oklch(0.5 0.2 27);
+  --delay-severe-surface: oklch(0.95 0.04 27);
+}
+
+.dark {
+  --delay-on-time: oklch(0.8 0.15 155);
+  --delay-on-time-surface: oklch(0.28 0.05 155);
+  --delay-minor: oklch(0.82 0.13 85);
+  --delay-minor-surface: oklch(0.3 0.05 85);
+  --delay-moderate: oklch(0.78 0.15 48);
+  --delay-moderate-surface: oklch(0.3 0.06 48);
+  --delay-severe: oklch(0.75 0.17 27);
+  --delay-severe-surface: oklch(0.3 0.07 27);
+}
+
+@keyframes latebird-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(3%, -4%, 0) scale(1.08); }
+}
+
+.latebird-drift {
+  animation: latebird-drift 28s ease-in-out infinite;
+}
+
+/* Honour the OS "reduce motion" setting rather than animating regardless. */
+@media (prefers-reduced-motion: reduce) {
+  .latebird-drift {
+    animation: none;
+  }
+}
