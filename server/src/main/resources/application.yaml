@@ -57,6 +57,11 @@ analyzer:
   # waking service as a broken one.
   timeout-seconds: ${ANALYZER_TIMEOUT_SECONDS:60}
 
+# Nightly rebuild of the route_reliability aggregate table.
+# Overridable so the job can be exercised on demand without waiting for 4am.
+reliability:
+  cron: ${RELIABILITY_CRON:0 0 4 * * *}
+
 server:
   port: ${SERVER_PORT:8081}
 

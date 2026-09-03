@@ -2,10 +2,14 @@ package com.main.server.service;
 
 import com.main.server.dto.FlightAnalysisResponse;
 import com.main.server.dto.FlightOperationDto;
+import com.main.server.dto.RouteReliabilityResponse;
 import com.main.server.dto.SearchResponse;
 import com.main.server.entity.Flight;
+import com.main.server.entity.RouteReliability;
 import com.main.server.mapper.FlightMapper;
+import com.main.server.mapper.ReliabilityMapper;
 import com.main.server.repository.FlightRepository;
+import com.main.server.repository.RouteReliabilityRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Limit;
 import org.springframework.http.HttpStatus;
@@ -42,6 +46,7 @@ public class FlightService {
     private static final Pattern FLIGHT_NUMBER = Pattern.compile("^[A-Z0-9]{2}\\d{1,4}$");
     private static final Pattern ROUTE = Pattern.compile("^([A-Z]{3})[^A-Z0-9]+([A-Z]{3})$");
     private final FlightRepository flightRepository;
+    private final RouteReliabilityRepository routeReliabilityRepository;
 
 
     // GET /api/flights/{flightNumber}
@@ -134,6 +139,37 @@ public class FlightService {
         }
 
         return new SearchResponse("ROUTE", null, origin, dest, count);
+    }
+
+    @Transactional(readOnly = true)
+    public RouteReliabilityResponse routeReliability(String origin, String dest) {
+        String from = normalize(origin);
+        String to = normalize(dest);
+
+        List<RouteReliability> rows =
+                routeReliabilityRepository.findForRoute(from, to, MIN_SAMPLE);
+        if (rows.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "No reliability data for " + from + " to " + to);
+        }
+
+        return ReliabilityMapper.toResponse(from, to, null, rows);
+    }
+
+    @Transactional(readOnly = true)
+    public RouteReliabilityResponse hourlyReliability(String carrier, String origin, String dest) {
+        String airline = normalize(carrier);
+        String from = normalize(origin);
+        String to = normalize(dest);
+
+        List<RouteReliability> rows =
+                routeReliabilityRepository.findForRouteAndCarrier(from, to, airline, MIN_SAMPLE);
+        if (rows.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "No reliability data for " + airline + " on " + from + " to " + to);
+        }
+
+        return ReliabilityMapper.toResponse(from, to, airline, rows);
     }
 
     private static Double onTimeRate(long onTime, long completed) {

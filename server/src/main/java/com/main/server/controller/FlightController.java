@@ -3,6 +3,7 @@ package com.main.server.controller;
 import com.main.server.dto.AirportDto;
 import com.main.server.dto.CarrierDto;
 import com.main.server.dto.FlightAnalysisResponse;
+import com.main.server.dto.RouteReliabilityResponse;
 import com.main.server.dto.SearchResponse;
 import com.main.server.service.AirportService;
 import com.main.server.service.CarrierService;
@@ -32,6 +33,8 @@ public class FlightController {
     
     //fields
     private static final String FLIGHT_NUMBER_REGEX = "^[A-Za-z0-9]{2}\\d{1,4}$";
+    private static final String AIRPORT_REGEX = "^[A-Za-z]{3}$";
+    private static final String CARRIER_REGEX = "^[A-Za-z0-9]{2}$";
     private final AirportService airportService;
     private final CarrierService carrierService;
     private final FlightService flightService;
@@ -66,5 +69,35 @@ public class FlightController {
             String flightNumber) {
 
         return flightService.recentOperations(flightNumber);
+    }
+
+    @GetMapping("/routes/{origin}/{dest}")
+    public RouteReliabilityResponse route(
+            @PathVariable
+            @Pattern(regexp = AIRPORT_REGEX, message = "must be a 3-letter airport code")
+            String origin,
+
+            @PathVariable
+            @Pattern(regexp = AIRPORT_REGEX, message = "must be a 3-letter airport code")
+            String dest) {
+
+        return flightService.routeReliability(origin, dest);
+    }
+
+    @GetMapping("/reliability")
+    public RouteReliabilityResponse reliability(
+            @RequestParam
+            @Pattern(regexp = CARRIER_REGEX, message = "must be a 2-character airline code")
+            String carrier,
+
+            @RequestParam
+            @Pattern(regexp = AIRPORT_REGEX, message = "must be a 3-letter airport code")
+            String origin,
+
+            @RequestParam
+            @Pattern(regexp = AIRPORT_REGEX, message = "must be a 3-letter airport code")
+            String dest) {
+
+        return flightService.hourlyReliability(carrier, origin, dest);
     }
 }
