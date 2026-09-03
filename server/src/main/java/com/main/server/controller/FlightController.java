@@ -3,11 +3,13 @@ package com.main.server.controller;
 import com.main.server.dto.AirportDto;
 import com.main.server.dto.CarrierDto;
 import com.main.server.dto.FlightAnalysisResponse;
+import com.main.server.dto.OptimalWindowResponse;
 import com.main.server.dto.RouteReliabilityResponse;
 import com.main.server.dto.SearchResponse;
 import com.main.server.service.AirportService;
 import com.main.server.service.CarrierService;
 import com.main.server.service.FlightService;
+import com.main.server.service.OptimalWindowService;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ public class FlightController {
     private final AirportService airportService;
     private final CarrierService carrierService;
     private final FlightService flightService;
+    private final OptimalWindowService optimalWindowService;
 
     // GET /api/airports?q=SF
     // @RequestParam is required by default, so a missing q returns 400.
@@ -99,5 +102,20 @@ public class FlightController {
             String dest) {
 
         return flightService.hourlyReliability(carrier, origin, dest);
+    }
+
+    // GET /api/optimal-window?origin=SFO&dest=JFK
+    // The same hourly data as /api/routes, ranked into a "book this window" answer. 
+    @GetMapping("/optimal-window")
+    public OptimalWindowResponse optimalWindow(
+            @RequestParam
+            @Pattern(regexp = AIRPORT_REGEX, message = "must be a 3-letter airport code")
+            String origin,
+
+            @RequestParam
+            @Pattern(regexp = AIRPORT_REGEX, message = "must be a 3-letter airport code")
+            String dest) {
+
+        return optimalWindowService.forRoute(origin, dest);
     }
 }
