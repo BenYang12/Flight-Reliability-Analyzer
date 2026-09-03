@@ -29,6 +29,34 @@ spring:
         order_inserts: true
         order_updates: true
 
+# Settings for the two services this API calls OUT to.
+#
+# Both blocks follow the same rule: no secret is written here. ${VAR:default}
+# means "read environment variable VAR, and if it is unset use default". URLs get
+# a working local default; credentials get an EMPTY default, so a missing key
+# fails loudly at first use instead of silently authenticating as nobody.
+#
+# These come from the repo-root .env, which git ignores. Spring Boot does not
+# read .env files, so load it into the shell before starting the app:
+#     set -a; source ../.env; set +a
+
+# OpenSky Network — live ADS-B operations (Checkpoint 7).
+opensky:
+  client-id: ${OPENSKY_CLIENT_ID:}
+  client-secret: ${OPENSKY_CLIENT_SECRET:}
+  base-url: https://opensky-network.org/api
+  # OpenSky moved from basic auth to OAuth2 client-credentials in 2025. Access
+  # tokens are issued by this Keycloak endpoint, NOT by the API host above.
+  token-url: https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token
+
+# The Flask model service in flight-analyzer/ (Checkpoint 6).
+analyzer:
+  base-url: ${ANALYZER_URL:http://localhost:5000}
+  # Generous on purpose. A cold Flask service on Render's free tier takes ~50s to
+  # answer its first request; timing out at the usual few seconds would report a
+  # waking service as a broken one.
+  timeout-seconds: ${ANALYZER_TIMEOUT_SECONDS:60}
+
 server:
   port: ${SERVER_PORT:8081}
 
