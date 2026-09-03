@@ -30,14 +30,16 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipInputStream;
 
-// Incremental BTS refresh: re-import one file's worth of flights through JPA.
-//
+// This service performs incremental imports of historical flight data from BTS into PostgreSQL
+
+
 // The one-time bulk load of all four months is ml/get_data.py, which uses
-// Postgres COPY and finishes 871k rows in about 14 seconds. This class exists
-// for the smaller, ongoing case — a corrected day, a newly published month —
+// Postgres COPY and finishes 871k rows in about 14 seconds.
+
+// This class exists for the smaller, ongoing case — a corrected day, a newly published month —
 // where the data has to flow through the same entity model the rest of the API
 // uses, rather than around it.
-//
+
 // It is also where JPA's abstraction leaks: persisting rows one at a time is
 // unusably slow, and the fix (batch_size + flush-and-clear) is not something
 // the ORM does for you.
@@ -169,6 +171,11 @@ public class BtsImportService {
                 flight.setDepTime(toInt(get(f, column, "DepTime")));
                 flight.setCrsArrTime(toInt(get(f, column, "CRSArrTime")));
                 flight.setArrTime(toInt(get(f, column, "ArrTime")));
+
+                // Scheduled block minutes. The model service divides arrival
+                // delay by this, so an incremental import that skipped it would
+                // produce rows the clusterer cannot score.
+                flight.setCrsElapsedTime(toInt(get(f, column, "CRSElapsedTime")));
 
                 // The signed columns, not the *Minutes variants, which floor at
                 // zero and would erase every early departure.

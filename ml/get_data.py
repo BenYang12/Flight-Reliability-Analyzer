@@ -84,6 +84,7 @@ COLUMN_MAP = {
     "DepDelay": "dep_delay_min",
     "CRSArrTime": "crs_arr_time",
     "ArrTime": "arr_time",
+    "CRSElapsedTime": "crs_elapsed_time",
     "ArrDelay": "arr_delay_min",
     "TaxiOut": "taxi_out",
     "TaxiIn": "taxi_in",
@@ -112,10 +113,9 @@ TRAINING_COLUMNS = [
 #   id         - Postgres generates it
 #   callsign   - OpenSky's field only
 #   cluster_id - Phase 3 assigns it
-# dep_hour and crs_elapsed_time are absent too: both are derivable, so they live in the training CSV rather than being stored.
 FLIGHT_COLUMNS = [
     "flight_number", "carrier_iata", "origin", "dest", "flight_date",
-    "crs_dep_time", "dep_time", "crs_arr_time", "arr_time",
+    "crs_dep_time", "dep_time", "crs_arr_time", "arr_time", "crs_elapsed_time",
     "dep_delay_min", "arr_delay_min",
     "cancelled", "diverted",
     "carrier_delay", "weather_delay", "nas_delay", "security_delay",
@@ -202,8 +202,7 @@ def build_training_set(df):
     training = df[~df.cancelled & ~df.diverted & df.arr_delay_min.notna()].copy()
     training["dep_hour"] = (training.crs_dep_time // 100) % 24
     training["recovery"] = training.dep_delay_min - training.arr_delay_min
-    training["crs_elapsed_time"] = training.CRSElapsedTime
-    training["delay_ratio"] = training.arr_delay_min / training.CRSElapsedTime
+    training["delay_ratio"] = training.arr_delay_min / training.crs_elapsed_time
 
     if len(training) > TRAINING_SAMPLE_SIZE:
         # Fixed seed: the committed CSV must be reproducible from the same input.

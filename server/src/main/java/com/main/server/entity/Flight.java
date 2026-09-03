@@ -67,6 +67,11 @@ public class Flight {
     private Integer crsArrTime;
     private Integer arrTime;
 
+
+    // Gate to Gate time, straight from BTS.
+    // Stored b/c the Flask service needs it to compute delay_ratio (arr_delay / scheduled block time)
+    private Integer crsElapsedTime;
+
     // Signed minutes
     private Integer depDelayMin;
     private Integer arrDelayMin;
