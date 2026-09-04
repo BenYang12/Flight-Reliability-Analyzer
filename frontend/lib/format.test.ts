@@ -5,6 +5,7 @@ import {
   hasEnoughSample,
   hhmmToLabel,
   onTimeRatePercent,
+  reliabilityOf,
   severityOf,
 } from "./format";
 import type { FlightOperation } from "./types";
@@ -95,6 +96,20 @@ describe("onTimeRatePercent", () => {
 
   it("passes null through so callers cannot print a suppressed rate", () => {
     expect(onTimeRatePercent(null)).toBeNull();
+  });
+});
+
+describe("reliabilityOf", () => {
+  it("maps an on-time rate onto the shared severity palette", () => {
+    expect(reliabilityOf(0.9)).toBe("on-time");
+    expect(reliabilityOf(0.85)).toBe("on-time");
+    expect(reliabilityOf(0.7)).toBe("minor");
+    expect(reliabilityOf(0.6)).toBe("moderate");
+    expect(reliabilityOf(0.4)).toBe("severe");
+  });
+
+  it("returns null for a suppressed rate so no badge is drawn", () => {
+    expect(reliabilityOf(null)).toBeNull();
   });
 });
 

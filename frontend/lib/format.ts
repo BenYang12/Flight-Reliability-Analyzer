@@ -36,6 +36,25 @@ export function hhmmToLabel(hhmm: number | null): string {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
+const RELIABLE_RATE = 0.85;
+const FAIR_RATE = 0.7;
+const POOR_RATE = 0.55;
+
+export const RELIABILITY_LABEL: Record<DelaySeverity, string> = {
+  "on-time": "Usually on time",
+  minor: "Mostly on time",
+  moderate: "Often late",
+  severe: "Frequently late",
+};
+
+export function reliabilityOf(onTimeRate: number | null): DelaySeverity | null {
+  if (onTimeRate === null) return null;
+  if (onTimeRate >= RELIABLE_RATE) return "on-time";
+  if (onTimeRate >= FAIR_RATE) return "minor";
+  if (onTimeRate >= POOR_RATE) return "moderate";
+  return "severe";
+}
+
 export function hasEnoughSample(completedOperations: number): boolean {
   return completedOperations >= MIN_SAMPLE;
 }
