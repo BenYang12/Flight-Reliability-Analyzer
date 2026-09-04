@@ -7,7 +7,6 @@ import type {
   FlightAnalysisResponse,
   FlightOperationLive,
   OptimalWindowResponse,
-  RouteReliabilityResponse,
   SearchResponse,
 } from "@/lib/types";
 
@@ -72,16 +71,6 @@ export function fetchFlight(
   );
 }
 
-export function fetchRouteReliability(
-  origin: string,
-  dest: string,
-): Promise<ApiResult<RouteReliabilityResponse>> {
-  return request(
-    `${API_BASE_URL}/api/routes/${encodeURIComponent(origin)}/${encodeURIComponent(dest)}`,
-    { next: { revalidate: REVALIDATE_HISTORY_SECONDS } },
-  );
-}
-
 export function fetchOptimalWindow(
   origin: string,
   dest: string,
@@ -109,10 +98,6 @@ export function searchQuery(q: string): Promise<ApiResult<SearchResponse>> {
   const query = new URLSearchParams({ q });
   // A relative URL: same origin, so the browser never learns the backend's address.
   return request(`/api/search?${query}`);
-}
-
-export function checkHealth(): Promise<ApiResult<{ status: string }>> {
-  return request(`/api/health`);
 }
 
 export function isNotFound(error: ApiError): boolean {
