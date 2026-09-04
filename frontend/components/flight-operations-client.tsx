@@ -267,21 +267,28 @@ export function FlightOperationsClient({ operations }: { operations: FlightOpera
 
             return (
               <li key={key} className="rounded-lg border">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 p-3">
-                  <span className="w-28 shrink-0 text-body tabular-nums">
-                    {formatFlightDate(operation.flightDate)}
-                  </span>
-                  <span className="font-mono text-caption text-muted-foreground">
-                    {operation.origin ?? "???"} → {operation.dest ?? "???"}
-                  </span>
-                  <span className="text-caption tabular-nums text-muted-foreground">
-                    {hhmmToLabel(operation.crsDepTime)} → {hhmmToLabel(operation.crsArrTime)}
-                  </span>
-                  <DelayChip operation={operation} />
+                {/* Below sm this stacks into a card; from sm up it is a single row. */}
+                <div className="flex flex-col gap-2 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4">
+                  <div className="flex items-center justify-between gap-3 sm:flex-none">
+                    <span className="text-body tabular-nums sm:w-28">
+                      {formatFlightDate(operation.flightDate)}
+                    </span>
+                    <DelayChip operation={operation} />
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-muted-foreground">
+                    <span className="font-mono">
+                      {operation.origin ?? "???"} → {operation.dest ?? "???"}
+                    </span>
+                    <span className="tabular-nums">
+                      {hhmmToLabel(operation.crsDepTime)} → {hhmmToLabel(operation.crsArrTime)}
+                    </span>
+                  </div>
+
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="ml-auto"
+                    className="w-full justify-center sm:ml-auto sm:w-auto"
                     aria-expanded={expanded}
                     aria-controls={panelId}
                     onClick={() => dispatch({ type: "toggle-row", key })}
