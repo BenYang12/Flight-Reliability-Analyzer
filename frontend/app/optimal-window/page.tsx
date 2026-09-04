@@ -195,8 +195,8 @@ export default async function OptimalWindowPage({
         </h2>
         <p className="mt-1 max-w-prose text-caption text-muted-foreground">
           Bars show the share of flights arriving within 15 minutes. Solid bars
-          fall inside the recommended window; faded ones do not. Colour repeats
-          the reliability rating, which is also written out below.
+          fall inside the recommended window; outlined ones do not. Colour
+          repeats the reliability rating, which is also written out below.
         </p>
 
         {rankedHours.length === 0 ? (

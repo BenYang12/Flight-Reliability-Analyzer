@@ -67,17 +67,23 @@ export function HoursChart({
               radius={[4, 4, 0, 0]}
               isAnimationActive={false}
             >
-              {data.map((entry) => (
-                <Cell
-                  key={entry.depHour}
-                  fill={
-                    entry.severity === null
-                      ? "var(--muted)"
-                      : SEVERITY_FILL[entry.severity]
-                  }
-                  fillOpacity={entry.inWindow ? 1 : 0.35}
-                />
-              ))}
+              {data.map((entry) => {
+                const colour =
+                  entry.severity === null
+                    ? "var(--muted-foreground)"
+                    : SEVERITY_FILL[entry.severity];
+                // Out-of-window bars fade their fill but keep a full-strength
+                // outline, so the shape stays above the 3:1 contrast floor.
+                return (
+                  <Cell
+                    key={entry.depHour}
+                    fill={colour}
+                    fillOpacity={entry.inWindow ? 1 : 0.2}
+                    stroke={colour}
+                    strokeWidth={entry.inWindow ? 0 : 1.5}
+                  />
+                );
+              })}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
