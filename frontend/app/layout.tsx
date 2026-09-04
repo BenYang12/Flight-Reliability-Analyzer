@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import { Plane } from "lucide-react";
 import { Background } from "@/components/background";
 import { NavTabs } from "@/components/nav-tab";
@@ -9,6 +9,8 @@ import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+// Headings only, so the display face never blocks body text from painting.
+const spaceGrotesk = Space_Grotesk({ variable: "--font-display", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "LateBird — how often is your flight actually late?",
@@ -20,7 +22,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     // suppressHydrationWarning: next-themes sets the theme class before React hydrates.
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} min-h-dvh antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} min-h-dvh antialiased`}
+      >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <Background />
           <div className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col px-4 sm:px-6">

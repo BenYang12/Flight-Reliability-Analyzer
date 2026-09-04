@@ -9,39 +9,44 @@ export function FlightCard({ flight }: { flight: FlightAnalysisResponse }) {
 
   return (
     <section aria-labelledby="flight-headline" className="rounded-xl border bg-card p-6 sm:p-8">
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h1 id="flight-headline" className="font-mono text-title font-semibold">
-          {flight.flightNumber}
-        </h1>
-        {flight.carrierName && (
-          <span className="text-body text-muted-foreground">{flight.carrierName}</span>
+      {/* Identity is context for the answer, so it sits above it as a smaller eyebrow. */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-body text-muted-foreground">
+        <span className="font-mono font-semibold text-foreground">{flight.flightNumber}</span>
+        {flight.carrierName && <span>{flight.carrierName}</span>}
+        {flight.origin && flight.dest && (
+          <span className="flex items-center gap-2">
+            <span className="font-mono">{flight.origin}</span>
+            <Plane aria-hidden="true" className="size-4" />
+            <span className="font-mono">{flight.dest}</span>
+          </span>
         )}
       </div>
 
-      {flight.origin && flight.dest && (
-        <p className="mt-1 flex items-center gap-2 text-body text-muted-foreground">
-          <span className="font-mono">{flight.origin}</span>
-          <Plane aria-hidden="true" className="size-4" />
-          <span className="font-mono">{flight.dest}</span>
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3">
+        {percent === null ? (
+          <h1 id="flight-headline" className="text-title font-semibold">
+            Not enough data yet
+          </h1>
+        ) : (
+          // Both spans live inside the h1 so heading navigation reads the full sentence.
+          <h1 id="flight-headline">
+            <span className="block text-display font-semibold tabular-nums">{percent}</span>
+            <span className="block text-caption font-normal text-muted-foreground">
+              arrived within 15 minutes
+            </span>
+          </h1>
+        )}
+
+        <ReliabilityBadge onTimeRate={flight.onTimeRate} />
+      </div>
+
+      {percent === null && (
+        <p className="mt-3 max-w-prose text-body text-muted-foreground">
+          Only {flight.completedOperations} completed{" "}
+          {flight.completedOperations === 1 ? "flight" : "flights"} on record — fewer than the{" "}
+          {MIN_SAMPLE} needed before an on-time rate means anything.
         </p>
       )}
-
-      <div className="mt-6 flex flex-wrap items-end gap-x-6 gap-y-3">
-        {percent === null ? (
-          <p className="max-w-prose text-body">
-            Only {flight.completedOperations} completed{" "}
-            {flight.completedOperations === 1 ? "flight" : "flights"} on record — fewer than the{" "}
-            {MIN_SAMPLE} needed before an on-time rate means anything.
-          </p>
-        ) : (
-          <div>
-            <p className="text-display font-semibold tabular-nums">{percent}</p>
-            <p className="text-caption text-muted-foreground">arrived within 15 minutes</p>
-          </div>
-        )}
-
-        <ReliabilityBadge onTimeRate={flight.onTimeRate} className="mb-1" />
-      </div>
 
       <dl className="mt-6 grid grid-cols-2 gap-4 border-t pt-4 text-caption sm:grid-cols-3">
         <div>
