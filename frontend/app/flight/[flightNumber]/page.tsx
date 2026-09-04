@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Info } from "lucide-react";
 import { DelayBreakdown } from "@/components/delay-breakdown";
 import { FlightCard } from "@/components/flight-card";
+import { FlightOperationsClient } from "@/components/flight-operations-client";
 import { fetchFlight, isNotFound } from "@/lib/api";
 
 // In Next 15 App Router, params arrives as a Promise and must be awaited.
@@ -41,6 +42,8 @@ export default async function FlightPage({
       )}
 
       <DelayBreakdown operations={flight.operations} />
+
+      <FlightOperationsClient operations={flight.operations} />
     </div>
   );
 }

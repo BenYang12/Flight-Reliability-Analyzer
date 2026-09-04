@@ -4,14 +4,14 @@ import { RELIABILITY_LABEL, reliabilityOf } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 // Severity is carried by colour, an icon, AND the label text, never colour alone.
-const SEVERITY_STYLES: Record<DelaySeverity, string> = {
+export const SEVERITY_STYLES: Record<DelaySeverity, string> = {
   "on-time": "bg-delay-on-time-surface text-delay-on-time",
   minor: "bg-delay-minor-surface text-delay-minor",
   moderate: "bg-delay-moderate-surface text-delay-moderate",
   severe: "bg-delay-severe-surface text-delay-severe",
 };
 
-const SEVERITY_ICONS: Record<DelaySeverity, typeof CheckCircle2> = {
+export const SEVERITY_ICONS: Record<DelaySeverity, typeof CheckCircle2> = {
   "on-time": CheckCircle2,
   minor: Clock,
   moderate: CircleAlert,
