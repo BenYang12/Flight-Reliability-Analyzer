@@ -149,7 +149,7 @@ function CauseList({ operation }: { operation: FlightOperation }) {
 
   return (
     <div className="mt-4">
-      <h4 className="text-caption font-medium text-muted-foreground">Causes filed by the carrier</h4>
+      <h3 className="text-caption font-medium text-muted-foreground">Causes filed by the carrier</h3>
       <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-body">
         {causes.map((cause) => (
           <li key={cause.label} className="tabular-nums">
@@ -175,10 +175,10 @@ function AnalysisPanel({ operation }: { operation: FlightOperation }) {
 
   return (
     <div className="mt-4 rounded-lg bg-muted/50 p-4">
-      <h4 className="flex items-center gap-2 text-body font-medium">
+      <h3 className="flex items-center gap-2 text-body font-medium">
         <Sparkles aria-hidden="true" className="size-4" />
         {analysis.archetype}
-      </h4>
+      </h3>
       <p className="mt-1 max-w-prose text-body text-muted-foreground">{analysis.summary}</p>
       {analysis.facts.length > 0 && (
         <ul className="mt-3 list-inside list-disc space-y-1 text-caption text-muted-foreground">

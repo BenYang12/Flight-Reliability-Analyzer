@@ -137,26 +137,24 @@ export default async function OptimalWindowPage({
           <span className="font-mono">{recommendation.dest}</span>
         </p>
 
-        <h1 id="window-headline" className="mt-2 text-title font-semibold">
-          Depart between{" "}
-          {hourRange(recommendation.startHour, recommendation.endHour)}
+        {/* The window is the answer to this page's question, so it carries the display size. */}
+        <h1 id="window-headline" className="mt-3">
+          <span className="block text-caption font-normal text-muted-foreground">
+            Depart between
+          </span>
+          <span className="block text-display font-semibold tabular-nums">
+            {hourRange(recommendation.startHour, recommendation.endHour)}
+          </span>
         </h1>
 
-        <div className="mt-6 flex flex-wrap items-end gap-x-6 gap-y-3">
-          <div>
-            <p className="text-display font-semibold tabular-nums">
-              {windowPercent}
-            </p>
-            <p className="text-caption text-muted-foreground">
-              arrive within 15 minutes, across{" "}
-              {recommendation.windowFlights.toLocaleString()} flights
-            </p>
-          </div>
-          <ReliabilityBadge
-            onTimeRate={recommendation.windowOnTimeRate}
-            className="mb-1"
-          />
+        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <p className="text-title font-semibold tabular-nums">{windowPercent}</p>
+          <ReliabilityBadge onTimeRate={recommendation.windowOnTimeRate} />
         </div>
+        <p className="mt-1 text-caption text-muted-foreground">
+          arrive within 15 minutes, across{" "}
+          {recommendation.windowFlights.toLocaleString()} flights
+        </p>
 
         <p className="mt-4 flex items-start gap-2 text-body">
           {liftPoints >= 0 ? (
