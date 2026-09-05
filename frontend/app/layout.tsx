@@ -16,7 +16,7 @@ const spaceGrotesk = Space_Grotesk({ variable: "--font-display", subsets: ["lati
 export const metadata: Metadata = {
   title: "LateBird — how often is your flight actually late?",
   description:
-    "On-time rates, delay causes, and the safest departure window for any US domestic flight or route, grounded in the federal on-time record. No login required.",
+    "On-time rates, delay causes, and the safest departure window across the 30 busiest US airports, grounded in the federal on-time record. No login required.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

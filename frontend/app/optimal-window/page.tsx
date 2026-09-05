@@ -84,7 +84,7 @@ export default async function OptimalWindowPage({
       <Shell>
         <EmptyState
           title="Pick a route first"
-          body="This page ranks every departure hour on a route by how often it lands on time. Search a route like SFO-JFK to see it."
+          body="This page ranks every departure hour on a route by how often it lands on time. Pick a route from the search page to see it."
         />
       </Shell>
     );
@@ -102,7 +102,7 @@ export default async function OptimalWindowPage({
         <Shell>
           <EmptyState
             title={`No record of ${origin.toUpperCase()} → ${dest.toUpperCase()}`}
-            body="The Bureau of Transportation Statistics reports on a fixed set of carriers and airports. This pairing is not among them, or it had too few flights to rank."
+            body="This tool loads the 30 busiest US airports for March–September 2026, and only routes where both ends are in that set. This pairing falls outside it, or had too few flights to rank."
           />
         </Shell>
       );
