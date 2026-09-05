@@ -47,6 +47,9 @@ export function HoursChart({
             data={data}
             margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
             aria-hidden
+            // Recharts makes its svg focusable by default, which would trap keyboard users in an aria-hidden subtree.
+            tabIndex={-1}
+            role="presentation"
           >
             <XAxis
               dataKey="depHour"

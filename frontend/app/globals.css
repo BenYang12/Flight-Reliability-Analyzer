@@ -114,11 +114,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* font-sans lives on body, not html: next/font defines --font-sans on the body class. */
   body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
+    @apply bg-background text-foreground font-sans;
   }
   /* Headings carry the display face; body copy and numerals stay on Geist. */
   h1, h2, h3 {
