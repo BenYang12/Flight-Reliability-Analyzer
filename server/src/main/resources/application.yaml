@@ -10,7 +10,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${DDL_AUTO:update}
 
     # Closes the database session when the service method returns, rather than
     # keeping it open until the HTTP response is written.
@@ -66,9 +66,9 @@ reliability:
   cron: ${RELIABILITY_CRON:0 0 4 * * *}
 
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${PORT:${SERVER_PORT:8081}}
 
 logging:
   level:
     # Log every SQL statement Hibernate runs. Verbose, and worth it while I learn.
-    org.hibernate.SQL: debug
+    org.hibernate.SQL: ${SQL_LOG_LEVEL:debug}

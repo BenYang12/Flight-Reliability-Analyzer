@@ -1,8 +1,9 @@
 """
-The Flask service. Two routes, and it delegates everything to model_utils.
+The Flask service. It delegates everything to model_utils.
 
     POST /analyze         one operation, with the LLM paragraph
     POST /analyze-batch   many operations, deterministic only
+    GET  /health          liveness, for the platform check and the keep-alive ping
 
 Run it with:
     flask --app app run
@@ -13,6 +14,11 @@ from flask import Flask, request
 import model_utils
 
 app = Flask(__name__)
+
+
+@app.get("/health")
+def health():
+    return {"status": "UP"}
 
 
 @app.post("/analyze")

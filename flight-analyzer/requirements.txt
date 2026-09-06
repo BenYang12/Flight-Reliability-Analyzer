@@ -14,3 +14,5 @@ pandas==3.0.5
 
 # The finishing layer: phrases a finished fact list. Never sees a statistic.
 anthropic==1.2.0
+
+gunicorn==26.2.0
