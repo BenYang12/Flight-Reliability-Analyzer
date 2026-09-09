@@ -14,7 +14,7 @@ the best hour to depart, all derived from the federal on-time record.
 
 - 🕐 **Best Time to Fly**
   - Ranks all 24 departure hours on a route and recommends a window.
-  - `LAX–SFO` departing 05:00–07:59 is **87% on time** against a route average of 56%.
+  - `LAX–SFO` departing 06:00–07:59 is **86% on time** against a route average of 47%.
 
 - 🧠 **ML-Based Delay Archetypes**
   - KMeans clustering on normalized BTS data assigns each operation a labeled archetype.
@@ -31,8 +31,8 @@ the best hour to depart, all derived from the federal on-time record.
 
 ## 📊 Coverage
 
-Statistics cover **871,139 flights** across the **30 busiest US airports** and **13 carriers**,
-from **March–September 2026**. A route is answerable only when _both_ endpoints are in that set,
+Statistics cover **430,977 flights** across the **30 busiest US airports** and **13 carriers**,
+from **May–June 2026**. A route is answerable only when _both_ endpoints are in that set,
 so the route picker offers exactly those 30 airports and nothing else.
 
 On time means **arriving within 15 minutes** of schedule — the FAA's definition.
@@ -99,6 +99,10 @@ npm run dev
 ---
 
 ## About
+
+**Live demo: [flight-reliability-analyzer.vercel.app](https://flight-reliability-analyzer.vercel.app)**
+— hosted on free tiers, so the first request after an idle period takes up to a minute
+while the API wakes; the interface shows a loading state rather than an error.
 
 This project was created by Benjamin Yang (me) <yangbenjamin19@gmail.com>.
 
